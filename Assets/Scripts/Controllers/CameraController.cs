@@ -23,6 +23,7 @@ namespace Controllers
         private Vector3 _origin;
         private Vector3 _difference;
         private bool _drag;
+        public bool notClickingUI;
         
         private void Awake()
         {
@@ -50,10 +51,20 @@ namespace Controllers
         {
             if (Input.GetAxis("Mouse ScrollWheel") != 0f)
             {
-                _targetZoom -= Input.mouseScrollDelta.y * zoom.zoomSensitivity;
+                /*_targetZoom -= Input.mouseScrollDelta.y * zoom.zoomSensitivity;
                 _targetZoom = Mathf.Clamp(_targetZoom, zoom.maxZoom, zoom.minZoom);
                 var newSize = Mathf.MoveTowards(cam.orthographicSize, _targetZoom, zoom.zoomSpeed * Time.deltaTime);
-                cam.orthographicSize = newSize;
+                cam.orthographicSize = newSize;*/
+                if (Input.mouseScrollDelta.y > 0f && cam.orthographicSize > zoom.maxZoom)
+                {
+                    cam.orthographicSize -= 2;
+                }
+
+                if (Input.mouseScrollDelta.y < 0f && cam.orthographicSize < zoom.minZoom)
+                {
+                    cam.orthographicSize += 2;
+                }
+                
             }
             if (Input.GetKeyDown(KeyCode.G) && cam.orthographicSize > zoom.maxZoom)
             {
@@ -68,7 +79,7 @@ namespace Controllers
         //taken from this page: https://forum.unity.com/threads/click-drag-camera-movement.39513/
         void ControlDrag()
         {
-            if (Input.GetMouseButton (0)) {
+            if (Input.GetMouseButton (0) && notClickingUI) {
                 _difference=(cam.ScreenToWorldPoint (Input.mousePosition))- cam.transform.position;
                 if (_drag==false){
                     _drag=true;
