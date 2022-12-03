@@ -1,11 +1,22 @@
+using System;
 using System.Linq;
 using UnityEngine;
 
-namespace Controllers
-{
+
     //Followed this tutorial: https://www.youtube.com/watch?v=riLtglHwoYw
     public class MouseController : MonoBehaviour
     {
+        public static MouseController Instance;
+
+        private void Awake()
+        {
+            if(Instance != null && Instance != this) {
+                DestroyImmediate(gameObject);
+                return;
+            }
+            Instance = this;
+        }
+
         // Start is called before the first frame update
         void Start()
         {
@@ -44,4 +55,4 @@ namespace Controllers
             return null;
         }
     }
-}
+

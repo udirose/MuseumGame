@@ -1,8 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Controllers
-{
+
     //zooming from this tut: https://gamedevbeginner.com/how-to-zoom-a-camera-in-unity-3-methods-with-examples/#two_d_zoom
     public class CameraController : MonoBehaviour
     {
@@ -97,4 +96,4 @@ namespace Controllers
             }
         }
     }
-}
+
