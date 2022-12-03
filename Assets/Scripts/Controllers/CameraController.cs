@@ -92,7 +92,7 @@ namespace Controllers
                 cam.transform.position = _origin-_difference;
             }
             //RESET CAMERA TO STARTING POSITION WITH RIGHT CLICK
-            if (Input.GetMouseButton (1)) {
+            if (Input.GetMouseButton (1) && !notClickingMap) {
                 cam.transform.position=_resetCamera;
             }
         }

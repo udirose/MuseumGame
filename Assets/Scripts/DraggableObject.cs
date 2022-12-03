@@ -22,13 +22,22 @@ public class DraggableObject : MonoBehaviour
 
     private void OnMouseDown()
     {
-        if (!Input.GetMouseButtonDown(0)) return;
-        var pos = transform.localPosition;
-        var mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);;
-        CameraController.Instance.notClickingMap = true;
-        isSelected = true;
-        startPosX = mousePos.x - pos.x;
-        startPosY = mousePos.y - pos.y;
+        if (Input.GetMouseButtonDown(0))
+        {
+            var pos = transform.localPosition;
+            var mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);;
+            CameraController.Instance.notClickingMap = true;
+            isSelected = true;
+            startPosX = mousePos.x - pos.x;
+            startPosY = mousePos.y - pos.y;
+        }
+
+        if (Input.GetMouseButtonDown(1))
+        {
+            CameraController.Instance.notClickingMap = true;
+            Destroy(gameObject);
+        }
+        
     }
 
     private void OnMouseUp()
