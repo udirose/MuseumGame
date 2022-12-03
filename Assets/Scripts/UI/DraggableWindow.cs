@@ -34,13 +34,13 @@ namespace UI
 
         public override void OnPointerDown(PointerEventData eventData)
         {
-            CameraController.Instance.notClickingUI = false;
+            CameraController.Instance.notClickingMap = true;
             Offset = new Vector2((transform.position.x - Input.mousePosition.x),(transform.position.y - Input.mousePosition.y));
             dragging = true;
         }
         public override void OnPointerUp(PointerEventData eventData)
         {
-            CameraController.Instance.notClickingUI = true;
+            CameraController.Instance.notClickingMap = false;
             dragging = false;
         }
     }

@@ -23,7 +23,7 @@ namespace Controllers
         private Vector3 _origin;
         private Vector3 _difference;
         private bool _drag;
-        public bool notClickingUI;
+        public bool notClickingMap;
         
         private void Awake()
         {
@@ -79,7 +79,7 @@ namespace Controllers
         //taken from this page: https://forum.unity.com/threads/click-drag-camera-movement.39513/
         void ControlDrag()
         {
-            if (Input.GetMouseButton (0) && notClickingUI) {
+            if (Input.GetMouseButton (0) && !notClickingMap) {
                 _difference=(cam.ScreenToWorldPoint (Input.mousePosition))- cam.transform.position;
                 if (_drag==false){
                     _drag=true;

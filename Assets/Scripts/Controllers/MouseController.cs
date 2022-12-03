@@ -23,7 +23,7 @@ namespace Controllers
                 gameObject.GetComponent<SpriteRenderer>().sortingOrder = overlayTile.GetComponent<SpriteRenderer>().sortingOrder;
             
                 //clicking logic
-                if (Input.GetMouseButtonDown(0))
+                if (Input.GetMouseButtonDown(0) && !CameraController.Instance.notClickingMap)
                 {
                     overlayTile.GetComponent<OverlayTile>().ShowTile();
                 }
