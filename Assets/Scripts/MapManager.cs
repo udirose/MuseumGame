@@ -46,6 +46,8 @@ public class MapManager : MonoBehaviour
                     if (!tileMap.HasTile(tileLocation) || overlayMap.ContainsKey(tileKey)) continue;
                     //create overlay and but it one z above
                     var overlayTile = Instantiate(overlayTilePrefab, overlayContainer.transform);
+                    //to put position of grid in overlay object
+                    overlayTile.gridLocation = tileLocation;
                     var cellWorldPosition = tileMap.GetCellCenterWorld(tileLocation);
                     overlayTile.transform.position = new Vector3(cellWorldPosition.x,cellWorldPosition.y,cellWorldPosition.z+1);
                     overlayTile.GetComponent<SpriteRenderer>().sortingOrder = tileMap.GetComponent<TilemapRenderer>().sortingOrder;
