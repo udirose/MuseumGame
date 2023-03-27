@@ -31,7 +31,7 @@ using UnityEngine;
             {
                 GameObject overlayTile = focusedTileHit.Value.collider.gameObject;
                 transform.position = overlayTile.transform.position;
-                gameObject.GetComponent<SpriteRenderer>().sortingOrder = overlayTile.GetComponent<SpriteRenderer>().sortingOrder;
+                gameObject.GetComponent<SpriteRenderer>().sortingOrder = overlayTile.GetComponent<SpriteRenderer>().sortingOrder+1;
             
                 //clicking logic
                 if (Input.GetMouseButtonDown(0) && !CameraController.Instance.notClickingMap)
