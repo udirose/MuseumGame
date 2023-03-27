@@ -9,14 +9,11 @@ using UnityEngine;
         //outlets
         public Camera cam;
         //zoom settings
-        [Serializable] public class ZoomVariables
-        {
-            public float maxZoom =5;
-            public float minZoom =20;
-            public float zoomSensitivity = 1;
-            public float zoomSpeed =30;
-        } public ZoomVariables zoom = new ZoomVariables();
         float _targetZoom;
+        public float maxZoom =.4f;
+        public float minZoom = 4;
+        public float zoomSens = .5f;
+        public float zoomSpeed =1;
         //drag settings
         private Vector3 _resetCamera;
         private Vector3 _origin;
@@ -26,6 +23,7 @@ using UnityEngine;
         
         private void Awake()
         {
+            //singleton
             if(Instance != null && Instance != this) {
                 DestroyImmediate(gameObject);
                 return;
@@ -50,28 +48,24 @@ using UnityEngine;
         {
             if (Input.GetAxis("Mouse ScrollWheel") != 0f)
             {
-                /*_targetZoom -= Input.mouseScrollDelta.y * zoom.zoomSensitivity;
-                _targetZoom = Mathf.Clamp(_targetZoom, zoom.maxZoom, zoom.minZoom);
-                var newSize = Mathf.MoveTowards(cam.orthographicSize, _targetZoom, zoom.zoomSpeed * Time.deltaTime);
-                cam.orthographicSize = newSize;*/
-                if (Input.mouseScrollDelta.y > 0f && cam.orthographicSize > zoom.maxZoom)
+                if (Input.mouseScrollDelta.y > 0f && cam.orthographicSize > maxZoom)
                 {
-                    cam.orthographicSize -= 2;
+                    cam.orthographicSize -= zoomSens;
                 }
 
-                if (Input.mouseScrollDelta.y < 0f && cam.orthographicSize < zoom.minZoom)
+                if (Input.mouseScrollDelta.y < 0f && cam.orthographicSize < minZoom)
                 {
-                    cam.orthographicSize += 2;
+                    cam.orthographicSize += zoomSens;
                 }
                 
             }
-            if (Input.GetKeyDown(KeyCode.G) && cam.orthographicSize > zoom.maxZoom)
+            if (Input.GetKeyDown(KeyCode.G) && cam.orthographicSize > maxZoom)
             {
-                cam.orthographicSize -= 1;
+                cam.orthographicSize -= zoomSens;
             }
-            if (Input.GetKeyDown(KeyCode.B) && cam.orthographicSize < zoom.minZoom)
+            if (Input.GetKeyDown(KeyCode.B) && cam.orthographicSize < minZoom)
             {
-                cam.orthographicSize += 1;
+                cam.orthographicSize += zoomSens;
             }
         }
 

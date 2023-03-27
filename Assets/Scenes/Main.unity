@@ -1085,11 +1085,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cam: {fileID: 519420031}
-  zoom:
-    maxZoom: 1
-    minZoom: 3
-    zoomSensitivity: 0.3
-    zoomSpeed: 1
+  maxZoom: 0.5
+  minZoom: 4
+  zoomSens: 0.5
+  zoomSpeed: 1
   notClickingMap: 0
 --- !u!1 &528737213
 GameObject:
