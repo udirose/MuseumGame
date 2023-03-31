@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class Pathfinding
 {
+    //script based on https://www.youtube.com/watch?v=u3hfWOCiIPg
     public List<OverlayTile> FindPath(OverlayTile start, OverlayTile end)
     {
         List<OverlayTile> openList = new List<OverlayTile>();
@@ -14,7 +15,6 @@ public class Pathfinding
 
         while (openList.Count > 0)
         {
-            //dont really get this line
             OverlayTile currentOverlayTile = openList.OrderBy(x => x.F).First();
             openList.Remove(currentOverlayTile);
             closedList.Add(currentOverlayTile);

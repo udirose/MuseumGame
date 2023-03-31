@@ -28,7 +28,7 @@ public class DraggableObject : MonoBehaviour
         {
             Debug.Log("selected = "+isSelected+", selectingClick = "+selectingClick);
             var pos = transform.localPosition;
-            var mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);;
+            var mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             
 
             RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);

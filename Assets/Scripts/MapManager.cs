@@ -11,6 +11,7 @@ public class MapManager : MonoBehaviour
     //outlets
     public OverlayTile overlayTilePrefab;
     public GameObject overlayContainer;
+    public GameObject NPC;
     
     //tracks overlay tiles
     public Dictionary<Vector2Int, OverlayTile> overlayMap;
@@ -55,6 +56,11 @@ public class MapManager : MonoBehaviour
                 }
             }
         }
+
+        //places npc at specific starting tile. end tile is mouse click
+        GameObject newNPC = Instantiate(NPC);
+        newNPC.GetComponent<NPC>().activeTile = overlayMap[new Vector2Int(-12,12)];
+        //newNPC.activeTile = -12 12 0
     }
 
     // Update is called once per frame

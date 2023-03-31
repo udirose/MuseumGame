@@ -185,6 +185,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   overlayTilePrefab: {fileID: 8972887899634675836, guid: adade9856a2799d49bb5eff9c10572db, type: 3}
   overlayContainer: {fileID: 1632285468}
+  NPC: {fileID: 1771651538487766213, guid: 5f3c7905cc8c7ab4cb5755674ac66810, type: 3}
 --- !u!1 &111804513
 GameObject:
   m_ObjectHideFlags: 0
@@ -1084,7 +1085,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cam: {fileID: 519420031}
-  maxZoom: 1
+  maxZoom: 2
   minZoom: 8
   zoomSens: 0.5
   zoomSpeed: 1
