@@ -7,7 +7,7 @@ public class NPC : MonoBehaviour
     private Pathfinding pathfinder;
     private List<OverlayTile> path;
     public int moveSpeed;
-    public OverlayTile activeTile;
+    private OverlayTile activeTile;
     
 
     void Start()
@@ -65,6 +65,11 @@ public class NPC : MonoBehaviour
         var tilePos = tile.transform.position;
         transform.position = new Vector3(tilePos.x, tilePos.y+.5f, tilePos.z);
         GetComponent<SpriteRenderer>().sortingOrder = tile.GetComponent<SpriteRenderer>().sortingOrder+1;
+        activeTile = tile;
+    }
+
+    public void SetActiveTile(OverlayTile tile)
+    {
         activeTile = tile;
     }
 }

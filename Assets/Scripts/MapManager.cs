@@ -59,8 +59,7 @@ public class MapManager : MonoBehaviour
 
         //places npc at specific starting tile. end tile is mouse click
         GameObject newNPC = Instantiate(NPC);
-        newNPC.GetComponent<NPC>().activeTile = overlayMap[new Vector2Int(-12,12)];
-        //newNPC.activeTile = -12 12 0
+        newNPC.GetComponent<NPC>().SetActiveTile(overlayMap[new Vector2Int(-12,12)]);
     }
 
     // Update is called once per frame

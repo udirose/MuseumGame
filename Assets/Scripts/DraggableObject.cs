@@ -42,6 +42,10 @@ public class DraggableObject : MonoBehaviour
                 startPosX = mousePos.x - pos.x;
                 startPosY = mousePos.y - pos.y;
             }
+            else
+            {
+                selectingClick = false;
+            }
         }
 
         if (isSelected)
