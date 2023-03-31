@@ -6,7 +6,7 @@ public class NPC : MonoBehaviour
 {
     private Pathfinding pathfinder;
     private List<OverlayTile> path;
-    public int moveSpeed;
+    public float moveSpeed;
     private OverlayTile activeTile;
     
 
