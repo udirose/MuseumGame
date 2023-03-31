@@ -32,8 +32,8 @@ public class DraggableObject : MonoBehaviour
             
 
             RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
-            var hitObject = hit.collider != null && hit.collider.gameObject.name==this.name;
-            if (hitObject)
+            //if hit this specific object
+            if (hit.collider != null && hit.collider.gameObject == gameObject)
             {
                 isSelected = true;
                 //alternates

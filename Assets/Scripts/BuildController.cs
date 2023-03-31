@@ -12,9 +12,6 @@ using UnityEngine;
         public float gridSizeX = 1.0f;
         public float gridSizeY = .5f;
         
-        //state tracking
-        public bool deleteMode = false;
-
         private void Awake()
         {
             if(Instance != null && Instance != this) {
@@ -28,24 +25,7 @@ using UnityEngine;
         {
             
         }
-
-        private void Update()
-        {
-            if (deleteMode && Input.GetMouseButtonDown(1))
-            {
-                var hits = MouseController.Instance.GetFocusedTile();
-                if (hits.HasValue)
-                {
-                    GameObject objectToDelete = hits.Value.collider.gameObject;
-                    if (objectToDelete.CompareTag("Building")) 
-                    { 
-                        Destroy(objectToDelete);
-                    }
-                }
-                
-            }
-        }
-
+        
         public void BuildDesk()
         {
             Instantiate(desk,SnapToGrid(desk.transform.position),Quaternion.identity);

@@ -971,7 +971,6 @@ MonoBehaviour:
   desk: {fileID: 2225971486491431713, guid: 4d11945d679b8c04484f78109e6b6aca, type: 3}
   gridSizeX: 1
   gridSizeY: 0.5
-  deleteMode: 0
 --- !u!4 &399898072
 Transform:
   m_ObjectHideFlags: 0
@@ -1085,8 +1084,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cam: {fileID: 519420031}
-  maxZoom: 0.4
-  minZoom: 4
+  maxZoom: 1
+  minZoom: 8
   zoomSens: 0.5
   zoomSpeed: 1
   notClickingMap: 0
