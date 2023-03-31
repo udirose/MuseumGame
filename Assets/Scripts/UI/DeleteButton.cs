@@ -12,19 +12,10 @@ namespace UI
         {
         
         }
-        
-        void ToggleDeleteMode()
+
+        public void DeleteObject()
         {
-            if (BuildController.Instance.deleteMode)
-            {
-                delButton.color = Color.black;
-                BuildController.Instance.deleteMode = true;
-            }
-            else
-            {
-                delButton.color = Color.red;
-                BuildController.Instance.deleteMode = false;
-            }
+            
         }
     }
 }
