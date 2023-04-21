@@ -4,9 +4,13 @@ using UnityEngine;
 
 public class NPC : MonoBehaviour
 {
+    public float moveSpeed;
+    //outlets
+    
+    //internal
+    private Animator anim;
     private Pathfinding pathfinder;
     private List<OverlayTile> path;
-    public float moveSpeed;
     private OverlayTile activeTile;
     
 
@@ -14,17 +18,17 @@ public class NPC : MonoBehaviour
     {
         path = new List<OverlayTile>();
         pathfinder = new Pathfinding();
+        anim = GetComponent<Animator>();
         PositionCharacterOnTile(activeTile);
     }
 
     // Update is called once per frame
     void Update()
     {
+        //select tile
         if (Input.GetMouseButtonDown(0))
         {
             var mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            
-
             RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
             //if hit this specific object
             if (hit.collider != null && hit.collider.gameObject.GetComponent<OverlayTile>())
@@ -32,6 +36,7 @@ public class NPC : MonoBehaviour
                 path = pathfinder.FindPath(activeTile, hit.collider.gameObject.GetComponent<OverlayTile>());
             }
         }
+        //path found
         if (path.Count > 0)
         {
             MoveAlongPath();
@@ -40,7 +45,7 @@ public class NPC : MonoBehaviour
 
     private void MoveAlongPath()
     {
-        //replace 1 with speed
+
         var step = moveSpeed * Time.deltaTime;
         var zIndex = path[0].transform.position.z;
         //fix not line up with tile (adds .5 to y pos)
@@ -48,6 +53,7 @@ public class NPC : MonoBehaviour
             path[0].transform.position.z);
 
         transform.position = Vector2.MoveTowards(transform.position, newLoc, step);
+        WalkAnimation(newLoc);
         transform.position = new Vector3(transform.position.x, transform.position.y, zIndex);
 
         //not sure what value .0001f is
@@ -57,7 +63,6 @@ public class NPC : MonoBehaviour
             path.RemoveAt(0);
         }
         
-
     }
 
     private void PositionCharacterOnTile(OverlayTile tile)
@@ -71,5 +76,17 @@ public class NPC : MonoBehaviour
     public void SetActiveTile(OverlayTile tile)
     {
         activeTile = tile;
+    }
+
+    void WalkAnimation(Vector3 newLoc)
+    {
+        Vector3 dir = newLoc - transform.position;
+        dir.z = 0f; // Ignore the z axis
+        // Get the sign of the x and y components of the direction
+        int signX = Mathf.RoundToInt(Mathf.Sign(dir.x));
+        int signY = Mathf.RoundToInt(Mathf.Sign(dir.y));
+        // Set the dirX and dirY parameters in the Animator
+        anim.SetFloat("dirX", signX);
+        anim.SetFloat("dirY", signY);
     }
 }
