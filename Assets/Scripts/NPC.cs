@@ -53,6 +53,7 @@ public class NPC : MonoBehaviour
             path[0].transform.position.z);
 
         transform.position = Vector2.MoveTowards(transform.position, newLoc, step);
+        anim.SetTrigger("moving");
         WalkAnimation(newLoc);
         transform.position = new Vector3(transform.position.x, transform.position.y, zIndex);
 
