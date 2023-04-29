@@ -1465,6 +1465,22 @@ PrefabInstance:
     serializedVersion: 2
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2225971486491431712, guid: 4d11945d679b8c04484f78109e6b6aca, type: 3}
+      propertyPath: m_Size.x
+      value: 0.62
+      objectReference: {fileID: 0}
+    - target: {fileID: 2225971486491431712, guid: 4d11945d679b8c04484f78109e6b6aca, type: 3}
+      propertyPath: m_Size.y
+      value: 0.45
+      objectReference: {fileID: 0}
+    - target: {fileID: 2225971486491431712, guid: 4d11945d679b8c04484f78109e6b6aca, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: d57e3264294d4264ab31f66d31d265ee, type: 3}
+    - target: {fileID: 2225971486491431712, guid: 4d11945d679b8c04484f78109e6b6aca, type: 3}
+      propertyPath: m_WasSpriteAssigned
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2225971486491431713, guid: 4d11945d679b8c04484f78109e6b6aca, type: 3}
       propertyPath: m_Name
       value: desk
@@ -1475,11 +1491,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2225971486491431727, guid: 4d11945d679b8c04484f78109e6b6aca, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -1.943
+      value: -1.9999
       objectReference: {fileID: 0}
     - target: {fileID: 2225971486491431727, guid: 4d11945d679b8c04484f78109e6b6aca, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.32
+      value: -0.3507
       objectReference: {fileID: 0}
     - target: {fileID: 2225971486491431727, guid: 4d11945d679b8c04484f78109e6b6aca, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1843,7 +1859,7 @@ TilemapRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 53407ec0f8f48d342a6717e588f155eb, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
