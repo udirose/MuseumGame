@@ -15,7 +15,12 @@ public class Pathfinding
 
         while (openList.Count > 0)
         {
-            OverlayTile currentOverlayTile = openList.OrderBy(x => x.F).First();
+            //OverlayTile currentOverlayTile = openList.OrderBy(x => x.F).First();
+            OverlayTile currentOverlayTile = openList.OrderBy(x => x.F).FirstOrDefault();
+            if (currentOverlayTile == null)
+            {
+                break;
+            }
             openList.Remove(currentOverlayTile);
             closedList.Add(currentOverlayTile);
 
