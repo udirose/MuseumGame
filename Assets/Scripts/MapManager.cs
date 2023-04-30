@@ -15,6 +15,8 @@ public class MapManager : MonoBehaviour
     
     //tracks overlay tiles
     public Dictionary<Vector2Int, OverlayTile> overlayMap;
+    //private ObjectPool<OverlayTile> tilePool;
+    private Coroutine generateMapCoroutine;
 
     //singleton
     void Awake()
@@ -32,7 +34,8 @@ public class MapManager : MonoBehaviour
     void Start()
     {
         overlayMap = new Dictionary<Vector2Int, OverlayTile>();
-        StartCoroutine(GenerateMap());
+        //tilePool = new ObjectPool<OverlayTile>(overlayTilePrefab, 500);
+        generateMapCoroutine = StartCoroutine(GenerateMap());
     }
 
     private IEnumerator GenerateMap()
@@ -112,6 +115,25 @@ public class MapManager : MonoBehaviour
                 lastMouseOverTile.HideTile();
                 lastMouseOverTile = null;
             }
+        }
+    }
+    void OnDestroy()
+    {
+        if (generateMapCoroutine != null)
+        {
+            StopCoroutine(generateMapCoroutine);
+        }
+
+        if (overlayMap != null)
+        {
+            foreach (var overlayTile in overlayMap.Values)
+            {
+                if (overlayTile != null)
+                {
+                    DestroyImmediate(overlayTile.gameObject);
+                }
+            }
+            overlayMap.Clear();
         }
     }
 }
