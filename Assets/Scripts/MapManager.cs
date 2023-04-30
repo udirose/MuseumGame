@@ -32,8 +32,18 @@ public class MapManager : MonoBehaviour
     void Start()
     {
         overlayMap = new Dictionary<Vector2Int, OverlayTile>();
+        StartCoroutine(GenerateMap());
+    }
+
+    private IEnumerator GenerateMap()
+    {
         var tileMap = gameObject.GetComponentInChildren<Tilemap>();
         var bounds = tileMap.cellBounds;
+        var tileMapRenderer = tileMap.GetComponent<TilemapRenderer>();
+        
+        //batching
+        int batchSize = 50;
+        int batchCounter = 0;
         
         //generate map: loops through all drawn tiles on tilemap
         for (var z = bounds.max.z; z >= bounds.min.z; z--)
@@ -51,8 +61,16 @@ public class MapManager : MonoBehaviour
                     overlayTile.gridLocation = tileLocation;
                     var cellWorldPosition = tileMap.GetCellCenterWorld(tileLocation);
                     overlayTile.transform.position = new Vector3(cellWorldPosition.x,cellWorldPosition.y,cellWorldPosition.z+1);
-                    overlayTile.GetComponent<SpriteRenderer>().sortingOrder = tileMap.GetComponent<TilemapRenderer>().sortingOrder;
+                    overlayTile.spriteRenderer.sortingOrder = tileMapRenderer.sortingOrder;
                     overlayMap.Add(tileKey,overlayTile);
+                    
+                    //batch handling
+                    batchCounter++;
+                    if (batchCounter >= batchSize)
+                    {
+                        batchCounter = 0;
+                        yield return null;
+                    }
                 }
             }
         }
@@ -63,8 +81,37 @@ public class MapManager : MonoBehaviour
     }
 
     // Update is called once per frame
+    private OverlayTile lastMouseOverTile = null;
     void Update()
     {
-        
+        // Get the current mouse position
+        Vector3 mouseWorldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector3Int mouseGridPosition = gameObject.GetComponentInChildren<Tilemap>().WorldToCell(mouseWorldPosition);
+        Vector2Int mouseTileKey = new Vector2Int(mouseGridPosition.x, mouseGridPosition.y);
+
+        // Update only the tile under the mouse
+        if (overlayMap.ContainsKey(mouseTileKey))
+        {
+            // Hide the previously hovered tile if the mouse moved to a different tile
+            if (lastMouseOverTile != null && lastMouseOverTile != overlayMap[mouseTileKey])
+            {
+                lastMouseOverTile.HideTile();
+            }
+
+            // Handle mouse input for the current tile
+            overlayMap[mouseTileKey].HandleMouseInput();
+
+            // Update the last mouse over tile
+            lastMouseOverTile = overlayMap[mouseTileKey];
+        }
+        else
+        {
+            // If the mouse is not over any tile, hide the last hovered tile
+            if (lastMouseOverTile != null)
+            {
+                lastMouseOverTile.HideTile();
+                lastMouseOverTile = null;
+            }
+        }
     }
 }
