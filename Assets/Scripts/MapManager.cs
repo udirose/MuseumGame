@@ -52,6 +52,7 @@ public class MapManager : MonoBehaviour
 
     private IEnumerator GenerateMap()
     {
+        //TO UNDO POOLING... change loops from minTile to bounds.min and comment out poolmap tiles
         var tileMap = gameObject.GetComponentInChildren<Tilemap>();
         var bounds = tileMap.cellBounds;
         var tileMapRenderer = tileMap.GetComponent<TilemapRenderer>();
