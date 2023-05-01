@@ -19,6 +19,7 @@ public class NPC : MonoBehaviour
         path = new List<OverlayTile>();
         pathfinder = new Pathfinding();
         anim = GetComponent<Animator>();
+        activeTile=MapManager.Instance.overlayMap[new Vector2Int(0,0)];
         PositionCharacterOnTile(activeTile);
     }
 

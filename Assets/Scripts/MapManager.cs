@@ -9,22 +9,25 @@ public class MapManager : MonoBehaviour
     private static MapManager _instance;
     public static MapManager Instance => _instance;
     
-    //outlets
+    //private
+    private Vector3 lastCameraPosition;
+
+
+    // Outlets
     public OverlayTile overlayTilePrefab;
     public GameObject overlayContainer;
     public GameObject NPC;
-    
-    //tracks overlay tiles
+
+    // Tracks overlay tiles
     public Dictionary<Vector2Int, OverlayTile> overlayMap;
-    private ObjectPool<OverlayTile> tilePool;
-    private Coroutine generateMapCoroutine;
-    private Dictionary<Vector2Int, OverlayTile> activeTiles;
     private Queue<OverlayTile> inactiveTiles;
     private Tilemap tileMap;
     private TilemapRenderer tileMapRenderer;
     private BoundsInt bounds;
+    private Coroutine poolMapTilesCoroutine;
 
-    //singleton
+
+    // Singleton
     void Awake()
     {
         if (_instance != null && _instance != this)
@@ -36,159 +39,107 @@ public class MapManager : MonoBehaviour
             _instance = this;
         }
     }
+
     // Start is called before the first frame update
     void Start()
     {
         overlayMap = new Dictionary<Vector2Int, OverlayTile>();
-        activeTiles = new Dictionary<Vector2Int, OverlayTile>();
         inactiveTiles = new Queue<OverlayTile>();
-        tilePool = new ObjectPool<OverlayTile>(overlayTilePrefab, 500);
-        generateMapCoroutine = StartCoroutine(GenerateMap());
 
         tileMap = gameObject.GetComponentInChildren<Tilemap>();
-        bounds = tileMap.cellBounds;
+        //bounds = tileMap.cellBounds;
         tileMapRenderer = tileMap.GetComponent<TilemapRenderer>();
-    }
-
-    private IEnumerator GenerateMap()
-    {
-        //TO UNDO POOLING... change loops from minTile to bounds.min and comment out poolmap tiles
-        var tileMap = gameObject.GetComponentInChildren<Tilemap>();
-        var bounds = tileMap.cellBounds;
-        var tileMapRenderer = tileMap.GetComponent<TilemapRenderer>();
-
-        // Batching
-        int batchSize = 50;
-        int batchCounter = 0;
-
-        Bounds cameraBounds = OrthographicBounds(Camera.main);
-        Vector3Int minTile = tileMap.WorldToCell(cameraBounds.min);
-        Vector3Int maxTile = tileMap.WorldToCell(cameraBounds.max);
-
-        // Generate tiles in view
-        for (var z = bounds.max.z; z >= bounds.min.z; z--)
-        {
-            for (var y = minTile.y; y <= maxTile.y; y++)
-            {
-                for (var x = minTile.x; x <= maxTile.x; x++)
-                {
-                    var tileLocation = new Vector3Int(x, y, z);
-                    var tileKey = new Vector2Int(x, y);
-
-                    GenerateTileAt(tileLocation, tileKey, tileMap, tileMapRenderer);
-
-                    // Batch handling
-                    batchCounter++;
-                    if (batchCounter >= batchSize)
-                    {
-                        batchCounter = 0;
-                        yield return null;
-                    }
-                }
-            }
-        }
-        // Places NPC at specific starting tile. End tile is mouse click
-        GameObject newNPC = Instantiate(NPC);
-        newNPC.GetComponent<NPC>().SetActiveTile(overlayMap[new Vector2Int(0,0)]);
+        Instantiate(NPC);
     }
 
     // Update is called once per frame
-    private OverlayTile lastMouseOverTile = null;
     void Update()
     {
         // Get the current mouse position
         Vector3 mouseWorldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Vector3Int mouseGridPosition = gameObject.GetComponentInChildren<Tilemap>().WorldToCell(mouseWorldPosition);
+        Vector3Int mouseGridPosition = tileMap.WorldToCell(mouseWorldPosition);
         Vector2Int mouseTileKey = new Vector2Int(mouseGridPosition.x, mouseGridPosition.y);
         HandleTileHovers(mouseTileKey);
-        PoolMapTiles();
-    }
-    //helped by chatppp
-    private void PoolMapTiles()
-    {
-        // Manage tile visibility and object pool
-        Bounds cameraBounds = OrthographicBounds(Camera.main);
-        Vector3Int minTile = tileMap.WorldToCell(cameraBounds.min);
-        Vector3Int maxTile = tileMap.WorldToCell(cameraBounds.max);
+        Camera mainCamera = Camera.main;
 
-        // Deactivate tiles that are out of view
-        List<Vector2Int> toRemove = new List<Vector2Int>();
-        foreach (var kvp in activeTiles)
+        if (mainCamera.transform.position != lastCameraPosition)
+        {
+            StopCoroutine(PoolMapTiles());
+            StartCoroutine(PoolMapTiles());
+        }
+
+        lastCameraPosition = mainCamera.transform.position;
+    }
+
+    private IEnumerator PoolMapTiles()
+    {
+        Camera mainCamera = Camera.main;
+
+        Bounds cameraBounds = IsometricBounds(mainCamera, 1f, 0.5f);
+        HashSet<Vector2Int> tilesInView = new HashSet<Vector2Int>();
+
+        var batchSize = 100;
+        var batchCounter = 0;
+
+        var z = 0;
+
+        foreach (Vector2Int tilePos in GetDiamondTiles(cameraBounds,1f,.5f))
+        {
+            Vector2Int tileKey = tilePos;
+            tilesInView.Add(tileKey);
+
+            if (!overlayMap.ContainsKey(tileKey))
+            {
+                GenerateTileAt(new Vector3Int(tilePos.x, tilePos.y, z), tileKey, tileMap, tileMapRenderer);
+            }
+            batchCounter++;
+
+            if (batchCounter >= batchSize)
+            {
+                batchCounter = 0;
+                yield return null;
+            }
+        }
+
+        foreach (var kvp in overlayMap)
         {
             Vector2Int tileKey = kvp.Key;
             OverlayTile tile = kvp.Value;
-            if (!IsTileInCameraView(tile.transform.position))
-            {
-                tile.gameObject.SetActive(false);
-                inactiveTiles.Enqueue(tile);
-                toRemove.Add(tileKey);
-            }
-        }
 
-        foreach (var tileKey in toRemove)
-        {
-            activeTiles.Remove(tileKey);
-        }
-
-        // Activate tiles that are in view
-        for (var z = bounds.max.z; z >= bounds.min.z; z--)
-        {
-            for (var y = minTile.y; y <= maxTile.y; y++)
+            if (tilesInView.Contains(tileKey))
             {
-                for (var x = minTile.x; x <= maxTile.x; x++)
+                if (!tile.gameObject.activeSelf)
                 {
-                    Vector2Int tileKey = new Vector2Int(x, y);
-                    if (!overlayMap.ContainsKey(tileKey) || activeTiles.ContainsKey(tileKey))
-                    {
-                        continue;
-                    }
-
-                    // Generate a new tile if not in the object pool
-                    if (inactiveTiles.All(t => t.gridLocation != new Vector3Int(x, y, (int)z)))
-                    {
-                        GenerateTileAt(new Vector3Int(x, y, (int)z), tileKey, tileMap, tileMapRenderer);
-                    }
-
-                    if (inactiveTiles.Count > 0)
-                    {
-                        OverlayTile tile = inactiveTiles.Dequeue();
-                        tile.gameObject.SetActive(true);
-                        activeTiles.Add(tileKey, tile);
-                    }
-                    
+                    tile.gameObject.SetActive(true);
+                }
+            }
+            else
+            {
+                if (tile.gameObject.activeSelf)
+                {
+                    tile.gameObject.SetActive(false);
+                    inactiveTiles.Enqueue(tile);
                 }
             }
         }
-    }
-    
-    private void GenerateTileAt(Vector3Int tileLocation, Vector2Int tileKey, Tilemap tileMap,
-        TilemapRenderer tileMapRenderer)
-    {
-        if (!tileMap.HasTile(tileLocation) || overlayMap.ContainsKey(tileKey)) return;
-        //create overlay and but it one z above
-        var overlayTile = Instantiate(overlayTilePrefab, overlayContainer.transform);
-        //to put position of grid in overlay object
-        overlayTile.gridLocation = tileLocation;
-        var cellWorldPosition = tileMap.GetCellCenterWorld(tileLocation);
-        overlayTile.transform.position = new Vector3(cellWorldPosition.x,cellWorldPosition.y,cellWorldPosition.z+1);
-        overlayTile.spriteRenderer.sortingOrder = tileMapRenderer.sortingOrder;
-        overlayMap.Add(tileKey,overlayTile);
-    }
-    private bool IsTileInCameraView(Vector3 position)
-    {
-        Bounds cameraBounds = OrthographicBounds(Camera.main);
-        return cameraBounds.Contains(position);
-    }
-    public static Bounds OrthographicBounds(Camera camera)
-    {
-        float screenAspect = (float)Screen.width / (float)Screen.height;
-        float cameraHeight = camera.orthographicSize * 2;
-        Bounds bounds = new Bounds(
-            camera.transform.position,
-            new Vector3(cameraHeight * screenAspect, cameraHeight, 0));
-        return bounds;
+        yield return null;
     }
 
+    private OverlayTile GenerateTileAt(Vector3Int tileLocation, Vector2Int tileKey, Tilemap tileMap, TilemapRenderer tileMapRenderer)
+    {
+        if (!tileMap.HasTile(tileLocation)) return null;
+
+        var overlayTile = Instantiate(overlayTilePrefab, overlayContainer.transform);
+        overlayTile.gridLocation = tileLocation;
+        var cellWorldPosition = tileMap.GetCellCenterWorld(tileLocation);
+        overlayTile.transform.position = new Vector3(cellWorldPosition.x, cellWorldPosition.y, cellWorldPosition.z + 1);
+        overlayTile.spriteRenderer.sortingOrder = tileMapRenderer.sortingOrder;
+        overlayTile.gameObject.SetActive(false);
+
+        overlayMap.Add(tileKey, overlayTile);
+        return overlayTile;
+    }
+    private OverlayTile lastMouseOverTile = null;
     void HandleTileHovers(Vector2Int mouseTileKey)
     {
         // Update only the tile under the mouse
@@ -216,14 +167,58 @@ public class MapManager : MonoBehaviour
             }
         }
     }
-    //handle stopping game
+    
+    private IEnumerable<Vector2Int> GetDiamondTiles(Bounds cameraBounds, float isoXScale, float isoYScale)
+    {
+        Vector3Int centerCell = tileMap.WorldToCell(cameraBounds.center);
+        Vector2Int center = new Vector2Int(centerCell.x, centerCell.y);
+
+        float width = cameraBounds.size.x;
+        float height = cameraBounds.size.y;
+
+        int radiusX = Mathf.CeilToInt(width * isoXScale)+3;
+        int radiusY = Mathf.CeilToInt(height *isoYScale)+5;
+
+        for (int y = -radiusY; y <= radiusY; y++)
+        {
+            for (int x = -radiusX; x <= radiusX; x++)
+            {
+                float dx = Mathf.Abs(x) * 0.5f;
+                float dy = Mathf.Abs(y) * 0.5f;
+                if (dx + dy <= radiusY)
+                {
+                    yield return center + new Vector2Int(x, y);
+                }
+            }
+        }
+    }
+
+    public static Bounds IsometricBounds(Camera camera, float isoXScale, float isoYScale)
+    {
+        float screenAspect = (float)Screen.width / (float)Screen.height;
+        float cameraHeight = camera.orthographicSize * 2;
+        float cameraWidth = cameraHeight * screenAspect;
+
+        Vector3 cameraPosition = camera.transform.position;
+        Vector3 min = new Vector3(cameraPosition.x - cameraWidth / 2, cameraPosition.y - cameraHeight / 2, cameraPosition.z);
+        Vector3 max = new Vector3(cameraPosition.x + cameraWidth / 2, cameraPosition.y + cameraHeight / 2, cameraPosition.z);
+
+        // Calculate bounds considering the isometric projection
+        float isoWidth = max.x - min.x;
+        float isoHeight = max.y - min.y;
+        float diagonal = Mathf.Sqrt(isoWidth * isoWidth + isoHeight * isoHeight);
+        float isoHalfWidth = diagonal / 2 * isoXScale;
+        float isoHalfHeight = isoHalfWidth * (isoYScale / isoXScale);
+
+        Vector3 isoCenter = cameraPosition;
+        isoCenter.x += isoHalfWidth - cameraWidth / 2;
+        isoCenter.y -= isoHalfHeight - cameraHeight / 2;
+
+        Bounds isoBounds = new Bounds(isoCenter, new Vector3(isoWidth, diagonal, 0f));
+        return isoBounds;
+    }
     void OnDestroy()
     {
-        if (generateMapCoroutine != null)
-        {
-            StopCoroutine(generateMapCoroutine);
-        }
-
         if (overlayMap != null)
         {
             foreach (var overlayTile in overlayMap.Values)
