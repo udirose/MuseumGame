@@ -11,7 +11,7 @@ public class NPC : MonoBehaviour
     private Animator anim;
     private Pathfinding pathfinder;
     private List<OverlayTile> path;
-    private OverlayTile activeTile;
+    public OverlayTile activeTile;
     
 
     void Start()
@@ -19,7 +19,6 @@ public class NPC : MonoBehaviour
         path = new List<OverlayTile>();
         pathfinder = new Pathfinding();
         anim = GetComponent<Animator>();
-        PositionCharacterOnTile(activeTile);
     }
 
     // Update is called once per frame
@@ -66,7 +65,7 @@ public class NPC : MonoBehaviour
         
     }
 
-    private void PositionCharacterOnTile(OverlayTile tile)
+    public void PositionCharacterOnTile(OverlayTile tile)
     {
         var tilePos = tile.transform.position;
         transform.position = new Vector3(tilePos.x, tilePos.y+.5f, tilePos.z);

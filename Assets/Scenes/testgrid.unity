@@ -249,8 +249,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1632285469}
   - {fileID: 1097543860}
+  - {fileID: 1632285469}
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1124,7 +1124,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 15
+  orthographic size: 10
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -1169,8 +1169,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cam: {fileID: 519420031}
   maxZoom: 4
-  minZoom: 25
-  zoomSens: 0.5
+  minZoom: 10
+  zoomSens: 1
   zoomSpeed: 1
   notClickingMap: 0
 --- !u!1 &528737213
@@ -1549,26 +1549,6 @@ PrefabInstance:
     serializedVersion: 2
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 2225971486491431712, guid: 4d11945d679b8c04484f78109e6b6aca, type: 3}
-      propertyPath: m_FlipX
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2225971486491431712, guid: 4d11945d679b8c04484f78109e6b6aca, type: 3}
-      propertyPath: m_Size.x
-      value: 0.62
-      objectReference: {fileID: 0}
-    - target: {fileID: 2225971486491431712, guid: 4d11945d679b8c04484f78109e6b6aca, type: 3}
-      propertyPath: m_Size.y
-      value: 0.45
-      objectReference: {fileID: 0}
-    - target: {fileID: 2225971486491431712, guid: 4d11945d679b8c04484f78109e6b6aca, type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: 21300000, guid: d57e3264294d4264ab31f66d31d265ee, type: 3}
-    - target: {fileID: 2225971486491431712, guid: 4d11945d679b8c04484f78109e6b6aca, type: 3}
-      propertyPath: m_WasSpriteAssigned
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 2225971486491431713, guid: 4d11945d679b8c04484f78109e6b6aca, type: 3}
       propertyPath: m_Name
       value: desk
