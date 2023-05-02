@@ -1169,7 +1169,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cam: {fileID: 519420031}
   maxZoom: 4
-  minZoom: 15
+  minZoom: 10
   zoomSens: 1
   zoomSpeed: 1
   notClickingMap: 0

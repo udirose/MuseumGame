@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json.Serialization;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -25,6 +26,9 @@ public class MapManager : MonoBehaviour
     private TilemapRenderer tileMapRenderer;
     private BoundsInt bounds;
     private Coroutine poolMapTilesCoroutine;
+    //npc
+    private NPC npc;
+    private bool npcNotSet = false;
 
 
     // Singleton
@@ -49,7 +53,8 @@ public class MapManager : MonoBehaviour
         tileMap = gameObject.GetComponentInChildren<Tilemap>();
         //bounds = tileMap.cellBounds;
         tileMapRenderer = tileMap.GetComponent<TilemapRenderer>();
-        Instantiate(NPC);
+        npc = Instantiate(NPC).GetComponent<NPC>();
+        npcNotSet = true;
     }
 
     // Update is called once per frame
@@ -69,6 +74,26 @@ public class MapManager : MonoBehaviour
         }
 
         lastCameraPosition = mainCamera.transform.position;
+        
+        //fix character error
+        if (npcNotSet)
+        {
+            Vector2Int tilePosition = new Vector2Int(0, 0);
+    
+            if (overlayMap.ContainsKey(tilePosition))
+            {
+                if (npc.activeTile == null)
+                {
+                    npc.activeTile = overlayMap[tilePosition];
+                    npc.PositionCharacterOnTile(npc.activeTile);
+                    npcNotSet = false;
+                }
+            }
+            else
+            {
+                npcNotSet = true;
+            }
+        }
     }
 
     private IEnumerator PoolMapTiles()
@@ -83,7 +108,7 @@ public class MapManager : MonoBehaviour
 
         var z = 0;
 
-        foreach (Vector2Int tilePos in GetDiamondTiles(cameraBounds,1f,.5f))
+        foreach (Vector2Int tilePos in GetDiamondTiles(cameraBounds))
         {
             Vector2Int tileKey = tilePos;
             tilesInView.Add(tileKey);
@@ -168,26 +193,34 @@ public class MapManager : MonoBehaviour
         }
     }
     
-    private IEnumerable<Vector2Int> GetDiamondTiles(Bounds cameraBounds, float isoXScale, float isoYScale)
+    private IEnumerable<Vector2Int> GetDiamondTiles(Bounds cameraBounds)
     {
-        Vector3Int centerCell = tileMap.WorldToCell(cameraBounds.center);
-        Vector2Int center = new Vector2Int(centerCell.x, centerCell.y);
+        Vector3 cameraPosition = Camera.main.transform.position;
+        float orthographicSize = Camera.main.orthographicSize;
+        float aspectRatio = Camera.main.aspect;
+    
+        Vector3Int topLeftCell = tileMap.WorldToCell(new Vector3(cameraPosition.x - orthographicSize * aspectRatio, cameraPosition.y + orthographicSize, cameraPosition.z));
+        Vector3Int topRightCell = tileMap.WorldToCell(new Vector3(cameraPosition.x + orthographicSize * aspectRatio, cameraPosition.y + orthographicSize, cameraPosition.z));
+        Vector3Int bottomLeftCell = tileMap.WorldToCell(new Vector3(cameraPosition.x - orthographicSize * aspectRatio, cameraPosition.y - orthographicSize, cameraPosition.z));
+        Vector3Int bottomRightCell = tileMap.WorldToCell(new Vector3(cameraPosition.x + orthographicSize * aspectRatio, cameraPosition.y - orthographicSize, cameraPosition.z));
 
-        float width = cameraBounds.size.x;
-        float height = cameraBounds.size.y;
+        int minX = Mathf.Min(topLeftCell.x, bottomLeftCell.x) - 2;
+        int maxX = Mathf.Max(topRightCell.x, bottomRightCell.x) + 2;
+        int minY = Mathf.Min(bottomLeftCell.y, bottomRightCell.y) - 2;
+        int maxY = Mathf.Max(topLeftCell.y, topRightCell.y) + 2;
 
-        int radiusX = Mathf.CeilToInt(width * isoXScale)+3;
-        int radiusY = Mathf.CeilToInt(height *isoYScale)+5;
-
-        for (int y = -radiusY; y <= radiusY; y++)
+        for (int y = minY; y <= maxY; y++)
         {
-            for (int x = -radiusX; x <= radiusX; x++)
+            for (int x = minX; x <= maxX; x++)
             {
-                float dx = Mathf.Abs(x) * 0.5f;
-                float dy = Mathf.Abs(y) * 0.5f;
-                if (dx + dy <= radiusY)
+                float dx = Mathf.Abs(x - topLeftCell.x);
+                float dy = Mathf.Abs(y - topLeftCell.y);
+                float dMaxX = Mathf.Abs(x - bottomRightCell.x);
+                float dMaxY = Mathf.Abs(y - bottomRightCell.y);
+
+                if (dx + dy <= maxY - minY && dMaxX + dMaxY <= maxY - minY)
                 {
-                    yield return center + new Vector2Int(x, y);
+                    yield return new Vector2Int(x, y);
                 }
             }
         }
@@ -203,18 +236,7 @@ public class MapManager : MonoBehaviour
         Vector3 min = new Vector3(cameraPosition.x - cameraWidth / 2, cameraPosition.y - cameraHeight / 2, cameraPosition.z);
         Vector3 max = new Vector3(cameraPosition.x + cameraWidth / 2, cameraPosition.y + cameraHeight / 2, cameraPosition.z);
 
-        // Calculate bounds considering the isometric projection
-        float isoWidth = max.x - min.x;
-        float isoHeight = max.y - min.y;
-        float diagonal = Mathf.Sqrt(isoWidth * isoWidth + isoHeight * isoHeight);
-        float isoHalfWidth = diagonal / 2 * isoXScale;
-        float isoHalfHeight = isoHalfWidth * (isoYScale / isoXScale);
-
-        Vector3 isoCenter = cameraPosition;
-        isoCenter.x += isoHalfWidth - cameraWidth / 2;
-        isoCenter.y -= isoHalfHeight - cameraHeight / 2;
-
-        Bounds isoBounds = new Bounds(isoCenter, new Vector3(isoWidth, diagonal, 0f));
+        Bounds isoBounds = new Bounds(cameraPosition, new Vector3(cameraWidth, cameraHeight, 0f));
         return isoBounds;
     }
     void OnDestroy()
