@@ -2,122 +2,112 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class Pathfinding
 {
-    //script based on https://www.youtube.com/watch?v=u3hfWOCiIPg
-    public List<OverlayTile> FindPath(OverlayTile start, OverlayTile end)
+    public Tilemap tilemap;
+
+
+    public Pathfinding(Tilemap tilemap)
     {
-        List<OverlayTile> openList = new List<OverlayTile>();
-        List<OverlayTile> closedList = new List<OverlayTile>();
-        
+        this.tilemap = tilemap;
+
+    }
+
+    public List<Vector3Int> FindPath(Vector3Int start, Vector3Int end)
+    {
+        List<Vector3Int> openList = new List<Vector3Int>();
+        List<Vector3Int> closedList = new List<Vector3Int>();
+        Dictionary<Vector3Int, Vector3Int> previousNodes = new Dictionary<Vector3Int, Vector3Int>();
+        Dictionary<Vector3Int, int> gValues = new Dictionary<Vector3Int, int>();
+        Dictionary<Vector3Int, int> hValues = new Dictionary<Vector3Int, int>();
+
         openList.Add(start);
+        gValues[start] = 0;
+        hValues[start] = GetManhattanDistance(start, end);
 
         while (openList.Count > 0)
         {
-            //OverlayTile currentOverlayTile = openList.OrderBy(x => x.F).First();
-            OverlayTile currentOverlayTile = openList.OrderBy(x => x.F).FirstOrDefault();
-            if (currentOverlayTile == null)
-            {
-                break;
-            }
-            openList.Remove(currentOverlayTile);
-            closedList.Add(currentOverlayTile);
+            Vector3Int currentCell = openList.OrderBy(c => gValues[c] + hValues[c]).FirstOrDefault();
 
-            if (currentOverlayTile == end)
+            if (currentCell == end)
             {
-                return GetFinishedList(start, end);
+                return GetFinishedList(start, end, previousNodes);
             }
 
-            var neighborTiles = GetNeighbourTiles(currentOverlayTile);
+            openList.Remove(currentCell);
+            closedList.Add(currentCell);
 
-            foreach (var neighbour in neighborTiles)
+            var neighborCells = GetNeighbourCells(currentCell);
+
+            foreach (var neighbour in neighborCells)
             {
-                //1 is the jump height
-                if (neighbour.isBlocked || closedList.Contains(neighbour) ||
-                    Mathf.Abs(currentOverlayTile.gridLocation.z - neighbour.gridLocation.z) > 1)
+                if (closedList.Contains(neighbour) || tilemap.HasTile(neighbour))
                 {
                     continue;
                 }
-                
-                //calc g h and f values: manhattan distance
-                neighbour.G = GetManhattanDistance(start, neighbour);
-                neighbour.H = GetManhattanDistance(end, neighbour);
 
-                neighbour.previous = currentOverlayTile;
+                int tentativeG = gValues[currentCell] + GetManhattanDistance(currentCell, neighbour);
 
                 if (!openList.Contains(neighbour))
                 {
                     openList.Add(neighbour);
                 }
+                else if (tentativeG >= gValues[neighbour])
+                {
+                    continue;
+                }
+
+                previousNodes[neighbour] = currentCell;
+                gValues[neighbour] = tentativeG;
+                hValues[neighbour] = GetManhattanDistance(neighbour, end);
             }
         }
 
-        return new List<OverlayTile>();
-
+        return new List<Vector3Int>();
     }
 
-    private List<OverlayTile> GetFinishedList(OverlayTile start, OverlayTile end)
+    private List<Vector3Int> GetFinishedList(Vector3Int start, Vector3Int end, Dictionary<Vector3Int, Vector3Int> previousNodes)
     {
-        List<OverlayTile> finishedList = new List<OverlayTile>();
+        List<Vector3Int> finishedList = new List<Vector3Int>();
 
-        OverlayTile currentTile = end;
+        Vector3Int currentCell = end;
 
-        while (currentTile != start)
+        while (currentCell != start)
         {
-            finishedList.Add(currentTile);
-            currentTile = currentTile.previous;
+            finishedList.Add(currentCell);
+            currentCell = previousNodes[currentCell];
         }
 
         finishedList.Reverse();
         return finishedList;
     }
 
-    private int GetManhattanDistance(OverlayTile start, OverlayTile neighbour)
+    private int GetManhattanDistance(Vector3Int start, Vector3Int neighbour)
     {
-        return Mathf.Abs(start.gridLocation.x - neighbour.gridLocation.x) +
-               Mathf.Abs(start.gridLocation.y - neighbour.gridLocation.y);
+        return Mathf.Abs(start.x - neighbour.x) + Mathf.Abs(start.y - neighbour.y);
     }
 
-    private List<OverlayTile> GetNeighbourTiles(OverlayTile currentOverlayTile)
+    private List<Vector3Int> GetNeighbourCells(Vector3Int currentCell)
     {
-        var map = MapManager.Instance.overlayMap;
-        List<OverlayTile> neighbours = new List<OverlayTile>();
-        
-        //top
-        Vector2Int locationToCheck =
-            new Vector2Int(currentOverlayTile.gridLocation.x, currentOverlayTile.gridLocation.y + 1);
+        List<Vector3Int> neighbours = new List<Vector3Int>();
 
-        if (map.ContainsKey(locationToCheck))
-        {
-            neighbours.Add(map[locationToCheck]);
-        }
-        
-        //bottom
-        locationToCheck =
-            new Vector2Int(currentOverlayTile.gridLocation.x, currentOverlayTile.gridLocation.y - 1);
+        Vector3Int[] directions = {
+            Vector3Int.up,
+            Vector3Int.down,
+            Vector3Int.left,
+            Vector3Int.right
+        };
 
-        if (map.ContainsKey(locationToCheck))
+        foreach (var direction in directions)
         {
-            neighbours.Add(map[locationToCheck]);
-        }
-        
-        //left
-        locationToCheck =
-            new Vector2Int(currentOverlayTile.gridLocation.x-1, currentOverlayTile.gridLocation.y);
+            Vector3Int neighbour = currentCell + direction;
 
-        if (map.ContainsKey(locationToCheck))
-        {
-            neighbours.Add(map[locationToCheck]);
-        }
-        
-        //right
-        locationToCheck =
-            new Vector2Int(currentOverlayTile.gridLocation.x+1, currentOverlayTile.gridLocation.y);
-
-        if (map.ContainsKey(locationToCheck))
-        {
-            neighbours.Add(map[locationToCheck]);
+            if (tilemap.cellBounds.Contains(neighbour))
+            {
+                neighbours.Add(neighbour);
+            }
         }
 
         return neighbours;

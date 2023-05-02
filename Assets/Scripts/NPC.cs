@@ -1,23 +1,22 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class NPC : MonoBehaviour
 {
     public float moveSpeed;
-    //outlets
-    
-    //internal
+
+    public Tilemap tilemap;
     private Animator anim;
     private Pathfinding pathfinder;
-    private List<OverlayTile> path;
-    public OverlayTile activeTile;
-    
+    private List<Vector3Int> path;
+    public Vector3Int activeTile;
 
     void Start()
     {
-        path = new List<OverlayTile>();
-        pathfinder = new Pathfinding();
+        path = new List<Vector3Int>();
+        pathfinder = new Pathfinding(tilemap);
         anim = GetComponent<Animator>();
     }
 
@@ -28,11 +27,10 @@ public class NPC : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             var mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
-            //if hit this specific object
-            if (hit.collider != null && hit.collider.gameObject.GetComponent<OverlayTile>())
+            Vector3Int gridPos = tilemap.WorldToCell(mousePos);
+            if (tilemap.HasTile(gridPos))
             {
-                path = pathfinder.FindPath(activeTile, hit.collider.gameObject.GetComponent<OverlayTile>());
+                path = pathfinder.FindPath(activeTile, gridPos);
             }
         }
         //path found
@@ -44,36 +42,33 @@ public class NPC : MonoBehaviour
 
     private void MoveAlongPath()
     {
-
         var step = moveSpeed * Time.deltaTime;
-        var zIndex = path[0].transform.position.z;
-        //fix not line up with tile (adds .5 to y pos)
-        var newLoc = new Vector3(path[0].transform.position.x, path[0].transform.position.y + .5f,
-            path[0].transform.position.z);
+        var zIndex = tilemap.GetCellCenterWorld(path[0]).z;
+        var newLoc = tilemap.GetCellCenterWorld(path[0]);
+        newLoc.z = zIndex;
 
         transform.position = Vector2.MoveTowards(transform.position, newLoc, step);
         anim.SetTrigger("moving");
         WalkAnimation(newLoc);
         transform.position = new Vector3(transform.position.x, transform.position.y, zIndex);
 
-        //not sure what value .0001f is
         if (Vector2.Distance(transform.position, newLoc) < 0.0001f)
         {
             PositionCharacterOnTile(path[0]);
             path.RemoveAt(0);
         }
-        
     }
 
-    public void PositionCharacterOnTile(OverlayTile tile)
+    public void PositionCharacterOnTile(Vector3Int tile)
     {
-        var tilePos = tile.transform.position;
-        transform.position = new Vector3(tilePos.x, tilePos.y+.5f, tilePos.z);
-        GetComponent<SpriteRenderer>().sortingOrder = tile.GetComponent<SpriteRenderer>().sortingOrder+1;
+        var tilemap = MapManager.Instance.tilemap;
+        var tileWorldPos = tilemap.CellToWorld(tile);
+        transform.position = new Vector3(tileWorldPos.x, tileWorldPos.y + .5f, tileWorldPos.z);
+        GetComponent<SpriteRenderer>().sortingOrder = tilemap.GetComponent<TilemapRenderer>().sortingOrder + 1;
         activeTile = tile;
     }
 
-    public void SetActiveTile(OverlayTile tile)
+    public void SetActiveTile(Vector3Int tile)
     {
         activeTile = tile;
     }
@@ -82,10 +77,8 @@ public class NPC : MonoBehaviour
     {
         Vector3 dir = newLoc - transform.position;
         dir.z = 0f; // Ignore the z axis
-        // Get the sign of the x and y components of the direction
         int signX = Mathf.RoundToInt(Mathf.Sign(dir.x));
         int signY = Mathf.RoundToInt(Mathf.Sign(dir.y));
-        // Set the dirX and dirY parameters in the Animator
         anim.SetFloat("dirX", signX);
         anim.SetFloat("dirY", signY);
     }

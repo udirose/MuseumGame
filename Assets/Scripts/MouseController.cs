@@ -1,58 +1,82 @@
 using System;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 
-    //Followed this tutorial: https://www.youtube.com/watch?v=riLtglHwoYw
-    public class MouseController : MonoBehaviour
+//Followed this tutorial: https://www.youtube.com/watch?v=riLtglHwoYw
+public class MouseController : MonoBehaviour
+{
+    public static MouseController Instance;
+    private Tilemap tilemap;
+    private Vector3Int prevTilePos;
+    private Vector3 cursorOffset = new Vector3(-.5f, .25f, 0);
+
+    private void Awake()
     {
-        public static MouseController Instance;
-
-        private void Awake()
+        if (Instance != null && Instance != this)
         {
-            if(Instance != null && Instance != this) {
-                DestroyImmediate(gameObject);
-                return;
-            }
-            Instance = this;
+            DestroyImmediate(gameObject);
+            return;
         }
+        Instance = this;
+    }
 
-        // Start is called before the first frame update
-        void Start()
-        {
-        
-        }
+    void Start()
+    {
+        tilemap = MapManager.Instance.tilemap;
+    }
 
-        // Update is called once per frame
-        void LateUpdate()
+    void LateUpdate()
+    {
+        var focusedTilePos = GetFocusedTile();
+        if (focusedTilePos.HasValue)
         {
-            var focusedTileHit = GetFocusedTile();
-            if (focusedTileHit.HasValue)
+            Vector3Int currentTilePos = focusedTilePos.Value;
+            if (currentTilePos != prevTilePos)
             {
-                GameObject overlayTile = focusedTileHit.Value.collider.gameObject;
-                transform.position = overlayTile.transform.position;
-                gameObject.GetComponent<SpriteRenderer>().sortingOrder = overlayTile.GetComponent<SpriteRenderer>().sortingOrder+1;
-            
-                //clicking logic
-                if (Input.GetMouseButtonDown(0) && !CameraController.Instance.notClickingMap)
-                {
-                    overlayTile.GetComponent<OverlayTile>().ShowTile();
-                }
-            }
-        }
-
-        public RaycastHit2D? GetFocusedTile()
-        {
-            Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            Vector2 mousePosition2d = new Vector2(mousePosition.x, mousePosition.y);
-
-            RaycastHit2D[] hits = Physics2D.RaycastAll(mousePosition2d, Vector2.zero);
-            if (hits.Length > 0)
-            {
-                return hits.OrderByDescending(i => i.collider.transform.position.z).First();
+                HighlightTile(currentTilePos);
+                prevTilePos = currentTilePos;
             }
 
-            return null;
+            // Position cursor object
+            Vector3 cursorWorldPos = tilemap.CellToWorld(currentTilePos) + new Vector3(tilemap.cellSize.x / 2, 0);
+            cursorWorldPos.z = 0;
+            transform.position = cursorWorldPos + cursorOffset;
         }
     }
 
+    public Vector3Int? GetFocusedTile()
+    {
+        Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector3Int tilePosition = WorldToCell(mousePosition);
+
+        if (tilemap.HasTile(tilePosition))
+        {
+            return tilePosition;
+        }
+        return null;
+    }
+
+    void HighlightTile(Vector3Int tilePosition)
+    {
+        // Clear previous highlight
+        tilemap.SetTileFlags(prevTilePos, TileFlags.None);
+        tilemap.SetColor(prevTilePos, Color.white);
+
+        // Highlight current tile
+        tilemap.SetTileFlags(tilePosition, TileFlags.None);
+        tilemap.SetColor(tilePosition, Color.yellow);
+    }
+
+    private Vector3Int WorldToCell(Vector3 worldPosition)
+    {
+        Vector3 cellPosition = tilemap.transform.InverseTransformPoint(worldPosition);
+        Vector3 cellSize = tilemap.cellSize;
+        float halfX = cellSize.x / 2;
+        float halfY = cellSize.y / 2;
+        int x = Mathf.FloorToInt((cellPosition.x / halfX + cellPosition.y / halfY) / 2);
+        int y = Mathf.FloorToInt((cellPosition.y / halfY - (cellPosition.x / halfX)) / 2);
+        return new Vector3Int(x, y, 0);
+    }
+}
