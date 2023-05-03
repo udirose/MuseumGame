@@ -18,6 +18,8 @@ public class NPC : MonoBehaviour
         path = new List<Vector3Int>();
         pathfinder = new Pathfinding(tilemap);
         anim = GetComponent<Animator>();
+        activeTile = tilemap.WorldToCell(transform.position);
+        PositionCharacterOnTile(activeTile);
     }
 
     // Update is called once per frame
@@ -63,7 +65,8 @@ public class NPC : MonoBehaviour
     {
         var tilemap = MapManager.Instance.tilemap;
         var tileWorldPos = tilemap.CellToWorld(tile);
-        transform.position = new Vector3(tileWorldPos.x, tileWorldPos.y + .5f, tileWorldPos.z);
+        var tileHeight = tilemap.tileAnchor.y * tilemap.cellSize.y;
+        transform.position = new Vector3(tileWorldPos.x, tileWorldPos.y + tileHeight / 2f, tileWorldPos.z);
         GetComponent<SpriteRenderer>().sortingOrder = tilemap.GetComponent<TilemapRenderer>().sortingOrder + 1;
         activeTile = tile;
     }

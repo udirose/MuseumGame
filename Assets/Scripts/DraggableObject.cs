@@ -26,7 +26,7 @@ public class DraggableObject : MonoBehaviour
         //left click
         if (Input.GetMouseButtonDown(0))
         {
-            Debug.Log("selected = "+isSelected+", selectingClick = "+selectingClick);
+            //Debug.Log("selected = "+isSelected+", selectingClick = "+selectingClick);
             var pos = transform.localPosition;
             var mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             

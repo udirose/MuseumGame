@@ -35,7 +35,7 @@ public class MouseController : MonoBehaviour
             Vector3Int currentTilePos = focusedTilePos.Value;
             if (currentTilePos != prevTilePos)
             {
-                HighlightTile(currentTilePos);
+                //HighlightTile(currentTilePos);
                 prevTilePos = currentTilePos;
             }
 
@@ -50,7 +50,7 @@ public class MouseController : MonoBehaviour
     {
         Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector3Int tilePosition = WorldToCell(mousePosition);
-
+        
         if (tilemap.HasTile(tilePosition))
         {
             return tilePosition;
@@ -69,8 +69,9 @@ public class MouseController : MonoBehaviour
         tilemap.SetColor(tilePosition, Color.yellow);
     }
 
-    private Vector3Int WorldToCell(Vector3 worldPosition)
+    public static Vector3Int WorldToCell(Vector3 worldPosition)
     {
+        Tilemap tilemap = MapManager.Instance.tilemap;
         Vector3 cellPosition = tilemap.transform.InverseTransformPoint(worldPosition);
         Vector3 cellSize = tilemap.cellSize;
         float halfX = cellSize.x / 2;
