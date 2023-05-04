@@ -9,14 +9,13 @@ public class NPC : MonoBehaviour
 
     public Tilemap tilemap;
     private Animator anim;
-    private Pathfinding pathfinder;
     private List<Vector3Int> path;
     public Vector3Int activeTile;
+    public Pathfinding pathfinder;
 
     void Start()
     {
         path = new List<Vector3Int>();
-        pathfinder = new Pathfinding(tilemap);
         anim = GetComponent<Animator>();
         activeTile = tilemap.WorldToCell(transform.position);
         PositionCharacterOnTile(activeTile);
@@ -29,15 +28,22 @@ public class NPC : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             var mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            mousePos.z = 0;
+            Debug.Log("Mouse position: " + mousePos);
             Vector3Int gridPos = tilemap.WorldToCell(mousePos);
+            Debug.Log("Grid pos: "+gridPos);
             if (tilemap.HasTile(gridPos))
             {
+                Debug.Log("looking for path");
                 path = pathfinder.FindPath(activeTile, gridPos);
+                pathfinder.VisualizePath(path);
             }
+            Debug.Log("Path count: " + path.Count);
         }
         //path found
         if (path.Count > 0)
         {
+            Debug.Log("Found PATH!");
             MoveAlongPath();
         }
     }

@@ -4,112 +4,103 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public class Pathfinding
+public class Pathfinding : MonoBehaviour
 {
-    public Tilemap tilemap;
+    public Tilemap Tilemap;
 
-
-    public Pathfinding(Tilemap tilemap)
+    public List<Vector3Int> FindPath(Vector3Int start, Vector3Int destination)
     {
-        this.tilemap = tilemap;
+        SortedSet<Node> openSet = new SortedSet<Node>(new Node(default, null, 0, 0));
+        HashSet<Node> closedSet = new HashSet<Node>();
 
-    }
+        Node startNode = new Node(start, null, 0, Vector3Int.Distance(start, destination));
+        openSet.Add(startNode);
 
-    public List<Vector3Int> FindPath(Vector3Int start, Vector3Int end)
-    {
-        List<Vector3Int> openList = new List<Vector3Int>();
-        List<Vector3Int> closedList = new List<Vector3Int>();
-        Dictionary<Vector3Int, Vector3Int> previousNodes = new Dictionary<Vector3Int, Vector3Int>();
-        Dictionary<Vector3Int, int> gValues = new Dictionary<Vector3Int, int>();
-        Dictionary<Vector3Int, int> hValues = new Dictionary<Vector3Int, int>();
-
-        openList.Add(start);
-        gValues[start] = 0;
-        hValues[start] = GetManhattanDistance(start, end);
-
-        while (openList.Count > 0)
+        while (openSet.Count > 0)
         {
-            Vector3Int currentCell = openList.OrderBy(c => gValues[c] + hValues[c]).FirstOrDefault();
+            Node currentNode = openSet.Min; // Get the node with the lowest FCost
+            openSet.Remove(currentNode);
+            closedSet.Add(currentNode);
 
-            if (currentCell == end)
+            if (currentNode.GridPosition == destination)
             {
-                return GetFinishedList(start, end, previousNodes);
+                return RetracePath(startNode, currentNode);
             }
 
-            openList.Remove(currentCell);
-            closedList.Add(currentCell);
-
-            var neighborCells = GetNeighbourCells(currentCell);
-
-            foreach (var neighbour in neighborCells)
+            List<Vector3Int> neighbors = GetNeighbors(currentNode.GridPosition);
+            foreach (Vector3Int neighborPos in neighbors)
             {
-                if (closedList.Contains(neighbour) || tilemap.HasTile(neighbour))
-                {
-                    continue;
-                }
+                Node neighbor = new Node(neighborPos, currentNode, currentNode.GCost + 1, Vector3Int.Distance(neighborPos, destination));
 
-                int tentativeG = gValues[currentCell] + GetManhattanDistance(currentCell, neighbour);
+                if (closedSet.Contains(neighbor)) continue;
 
-                if (!openList.Contains(neighbour))
+                if (!openSet.Contains(neighbor) || currentNode.GCost + 1 < neighbor.GCost)
                 {
-                    openList.Add(neighbour);
-                }
-                else if (tentativeG >= gValues[neighbour])
-                {
-                    continue;
-                }
+                    neighbor.GCost = currentNode.GCost + 1;
+                    neighbor.Parent = currentNode;
 
-                previousNodes[neighbour] = currentCell;
-                gValues[neighbour] = tentativeG;
-                hValues[neighbour] = GetManhattanDistance(neighbour, end);
+                    if (openSet.Contains(neighbor))
+                    {
+                        openSet.Remove(neighbor);
+                    }
+
+                    openSet.Add(neighbor);
+                }
             }
         }
 
-        return new List<Vector3Int>();
+        return null;
     }
 
-    private List<Vector3Int> GetFinishedList(Vector3Int start, Vector3Int end, Dictionary<Vector3Int, Vector3Int> previousNodes)
+    private List<Vector3Int> GetNeighbors(Vector3Int nodePosition)
     {
-        List<Vector3Int> finishedList = new List<Vector3Int>();
+        List<Vector3Int> neighbors = new List<Vector3Int>();
 
-        Vector3Int currentCell = end;
-
-        while (currentCell != start)
+        // Define the four possible orthogonal movements (up, down, left, right)
+        Vector3Int[] directions = new Vector3Int[]
         {
-            finishedList.Add(currentCell);
-            currentCell = previousNodes[currentCell];
-        }
-
-        finishedList.Reverse();
-        return finishedList;
-    }
-
-    private int GetManhattanDistance(Vector3Int start, Vector3Int neighbour)
-    {
-        return Mathf.Abs(start.x - neighbour.x) + Mathf.Abs(start.y - neighbour.y);
-    }
-
-    private List<Vector3Int> GetNeighbourCells(Vector3Int currentCell)
-    {
-        List<Vector3Int> neighbours = new List<Vector3Int>();
-
-        Vector3Int[] directions = {
-            Vector3Int.up,
-            Vector3Int.down,
-            Vector3Int.left,
-            Vector3Int.right
+            new Vector3Int(0, 1, 0), // up
+            new Vector3Int(0, -1, 0), // down
+            new Vector3Int(1, 0, 0), // right
+            new Vector3Int(-1, 0, 0) // left
         };
 
-        foreach (var direction in directions)
+        // Check for valid neighbors in each direction
+        foreach (Vector3Int direction in directions)
         {
-            Vector3Int neighbour = currentCell + direction;
-
-            if (tilemap.cellBounds.Contains(neighbour))
+            Vector3Int neighborPosition = nodePosition + direction;
+            if (Tilemap.HasTile(neighborPosition))
             {
-                neighbours.Add(neighbour);
+                neighbors.Add(neighborPosition);
             }
         }
 
-        return neighbours;
+        return neighbors;
+    }
+
+    private List<Vector3Int> RetracePath(Node startNode, Node endNode)
+    {
+        List<Vector3Int> path = new List<Vector3Int>();
+        Node currentNode = endNode;
+
+        while (currentNode != startNode)
+        {
+            path.Add(currentNode.GridPosition);
+            currentNode = currentNode.Parent;
+        }
+
+        path.Reverse();
+        return path;
+    }
+    public void VisualizePath(List<Vector3Int> path)
+    {
+        if (path == null) return;
+
+        Color pathColor = new Color(0, 255, 0, 1f);
+        foreach (Vector3Int position in path)
+        {
+            Tilemap.SetTileFlags(position, TileFlags.None);
+            Tilemap.SetColor(position, pathColor);
+        }
     }
 }
