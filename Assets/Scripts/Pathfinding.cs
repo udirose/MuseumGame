@@ -18,7 +18,7 @@ public class Pathfinding : MonoBehaviour
 
         while (openSet.Count > 0)
         {
-            Node currentNode = openSet.Min; // Get the node with the lowest FCost
+            Node currentNode = openSet.Min; // Get the node with the lowest FCost from open set
             openSet.Remove(currentNode);
             closedSet.Add(currentNode);
 
@@ -30,10 +30,12 @@ public class Pathfinding : MonoBehaviour
             List<Vector3Int> neighbors = GetNeighbors(currentNode.GridPosition);
             foreach (Vector3Int neighborPos in neighbors)
             {
+                //create neighbor and calculate G and H
                 Node neighbor = new Node(neighborPos, currentNode, currentNode.GCost + 1, Vector3Int.Distance(neighborPos, destination));
 
                 if (closedSet.Contains(neighbor)) continue;
 
+                //if neighbor not been added or has lower G update values and add to openset
                 if (!openSet.Contains(neighbor) || currentNode.GCost + 1 < neighbor.GCost)
                 {
                     neighbor.GCost = currentNode.GCost + 1;

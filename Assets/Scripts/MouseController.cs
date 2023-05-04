@@ -42,6 +42,7 @@ public class MouseController : MonoBehaviour
             // Position cursor object
             Vector3 cursorWorldPos = tilemap.CellToWorld(currentTilePos) + new Vector3(tilemap.cellSize.x / 2, 0);
             cursorWorldPos.z = 0;
+            
             transform.position = cursorWorldPos + cursorOffset;
         }
     }
@@ -49,8 +50,9 @@ public class MouseController : MonoBehaviour
     public Vector3Int? GetFocusedTile()
     {
         Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Vector3Int tilePosition = WorldToCell(mousePosition);
-        
+        mousePosition.z = 0;
+        Vector3Int tilePosition = tilemap.WorldToCell(mousePosition);
+    
         if (tilemap.HasTile(tilePosition))
         {
             return tilePosition;
@@ -67,17 +69,5 @@ public class MouseController : MonoBehaviour
         // Highlight current tile
         tilemap.SetTileFlags(tilePosition, TileFlags.None);
         tilemap.SetColor(tilePosition, Color.yellow);
-    }
-
-    public static Vector3Int WorldToCell(Vector3 worldPosition)
-    {
-        Tilemap tilemap = MapManager.Instance.tilemap;
-        Vector3 cellPosition = tilemap.transform.InverseTransformPoint(worldPosition);
-        Vector3 cellSize = tilemap.cellSize;
-        float halfX = cellSize.x / 2;
-        float halfY = cellSize.y / 2;
-        int x = Mathf.FloorToInt((cellPosition.x / halfX + cellPosition.y / halfY) / 2);
-        int y = Mathf.FloorToInt((cellPosition.y / halfY - (cellPosition.x / halfX)) / 2);
-        return new Vector3Int(x, y, 0);
     }
 }
