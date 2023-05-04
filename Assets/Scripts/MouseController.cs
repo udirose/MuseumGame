@@ -8,7 +8,7 @@ using UnityEngine.Tilemaps;
 public class MouseController : MonoBehaviour
 {
     public static MouseController Instance;
-    private Tilemap tilemap;
+    public Tilemap tilemap;
     private Vector3Int prevTilePos;
     private Vector3 cursorOffset = new Vector3(-.5f, .25f, 0);
 
@@ -20,11 +20,6 @@ public class MouseController : MonoBehaviour
             return;
         }
         Instance = this;
-    }
-
-    void Start()
-    {
-        tilemap = MapManager.Instance.tilemap;
     }
 
     void LateUpdate()
