@@ -2,124 +2,107 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
-public class Pathfinding
+public class Pathfinding : MonoBehaviour
 {
-    //script based on https://www.youtube.com/watch?v=u3hfWOCiIPg
-    public List<OverlayTile> FindPath(OverlayTile start, OverlayTile end)
+    public Tilemap Tilemap;
+
+    public List<Vector3Int> FindPath(Vector3Int start, Vector3Int destination)
     {
-        List<OverlayTile> openList = new List<OverlayTile>();
-        List<OverlayTile> closedList = new List<OverlayTile>();
-        
-        openList.Add(start);
+        SortedSet<Node> openSet = new SortedSet<Node>(new Node(default, null, 0, 0));
+        HashSet<Node> closedSet = new HashSet<Node>();
 
-        while (openList.Count > 0)
+        Node startNode = new Node(start, null, 0, Vector3Int.Distance(start, destination));
+        openSet.Add(startNode);
+
+        while (openSet.Count > 0)
         {
-            //OverlayTile currentOverlayTile = openList.OrderBy(x => x.F).First();
-            OverlayTile currentOverlayTile = openList.OrderBy(x => x.F).FirstOrDefault();
-            if (currentOverlayTile == null)
-            {
-                break;
-            }
-            openList.Remove(currentOverlayTile);
-            closedList.Add(currentOverlayTile);
+            Node currentNode = openSet.Min; // Get the node with the lowest FCost from open set
+            openSet.Remove(currentNode);
+            closedSet.Add(currentNode);
 
-            if (currentOverlayTile == end)
+            if (currentNode.GridPosition == destination)
             {
-                return GetFinishedList(start, end);
+                return RetracePath(startNode, currentNode);
             }
 
-            var neighborTiles = GetNeighbourTiles(currentOverlayTile);
-
-            foreach (var neighbour in neighborTiles)
+            List<Vector3Int> neighbors = GetNeighbors(currentNode.GridPosition);
+            foreach (Vector3Int neighborPos in neighbors)
             {
-                //1 is the jump height
-                if (neighbour.isBlocked || closedList.Contains(neighbour) ||
-                    Mathf.Abs(currentOverlayTile.gridLocation.z - neighbour.gridLocation.z) > 1)
-                {
-                    continue;
-                }
-                
-                //calc g h and f values: manhattan distance
-                neighbour.G = GetManhattanDistance(start, neighbour);
-                neighbour.H = GetManhattanDistance(end, neighbour);
+                //create neighbor and calculate G and H
+                Node neighbor = new Node(neighborPos, currentNode, currentNode.GCost + 1, Vector3Int.Distance(neighborPos, destination));
 
-                neighbour.previous = currentOverlayTile;
+                if (closedSet.Contains(neighbor)) continue;
 
-                if (!openList.Contains(neighbour))
+                //if neighbor not been added or has lower G update values and add to openset
+                if (!openSet.Contains(neighbor) || currentNode.GCost + 1 < neighbor.GCost)
                 {
-                    openList.Add(neighbour);
+                    neighbor.GCost = currentNode.GCost + 1;
+                    neighbor.Parent = currentNode;
+
+                    if (openSet.Contains(neighbor))
+                    {
+                        openSet.Remove(neighbor);
+                    }
+
+                    openSet.Add(neighbor);
                 }
             }
         }
 
-        return new List<OverlayTile>();
-
+        return null;
     }
 
-    private List<OverlayTile> GetFinishedList(OverlayTile start, OverlayTile end)
+    private List<Vector3Int> GetNeighbors(Vector3Int nodePosition)
     {
-        List<OverlayTile> finishedList = new List<OverlayTile>();
+        List<Vector3Int> neighbors = new List<Vector3Int>();
 
-        OverlayTile currentTile = end;
-
-        while (currentTile != start)
+        // Define the four possible orthogonal movements (up, down, left, right)
+        Vector3Int[] directions = new Vector3Int[]
         {
-            finishedList.Add(currentTile);
-            currentTile = currentTile.previous;
+            new Vector3Int(0, 1, 0), // up
+            new Vector3Int(0, -1, 0), // down
+            new Vector3Int(1, 0, 0), // right
+            new Vector3Int(-1, 0, 0) // left
+        };
+
+        // Check for valid neighbors in each direction
+        foreach (Vector3Int direction in directions)
+        {
+            Vector3Int neighborPosition = nodePosition + direction;
+            if (Tilemap.HasTile(neighborPosition))
+            {
+                neighbors.Add(neighborPosition);
+            }
         }
 
-        finishedList.Reverse();
-        return finishedList;
+        return neighbors;
     }
 
-    private int GetManhattanDistance(OverlayTile start, OverlayTile neighbour)
+    private List<Vector3Int> RetracePath(Node startNode, Node endNode)
     {
-        return Mathf.Abs(start.gridLocation.x - neighbour.gridLocation.x) +
-               Mathf.Abs(start.gridLocation.y - neighbour.gridLocation.y);
+        List<Vector3Int> path = new List<Vector3Int>();
+        Node currentNode = endNode;
+
+        while (currentNode != startNode)
+        {
+            path.Add(currentNode.GridPosition);
+            currentNode = currentNode.Parent;
+        }
+
+        path.Reverse();
+        return path;
     }
-
-    private List<OverlayTile> GetNeighbourTiles(OverlayTile currentOverlayTile)
+    public void VisualizePath(List<Vector3Int> path)
     {
-        var map = MapManager.Instance.overlayMap;
-        List<OverlayTile> neighbours = new List<OverlayTile>();
-        
-        //top
-        Vector2Int locationToCheck =
-            new Vector2Int(currentOverlayTile.gridLocation.x, currentOverlayTile.gridLocation.y + 1);
+        if (path == null) return;
 
-        if (map.ContainsKey(locationToCheck))
+        Color pathColor = new Color(0, 255, 0, 1f);
+        foreach (Vector3Int position in path)
         {
-            neighbours.Add(map[locationToCheck]);
+            Tilemap.SetTileFlags(position, TileFlags.None);
+            Tilemap.SetColor(position, pathColor);
         }
-        
-        //bottom
-        locationToCheck =
-            new Vector2Int(currentOverlayTile.gridLocation.x, currentOverlayTile.gridLocation.y - 1);
-
-        if (map.ContainsKey(locationToCheck))
-        {
-            neighbours.Add(map[locationToCheck]);
-        }
-        
-        //left
-        locationToCheck =
-            new Vector2Int(currentOverlayTile.gridLocation.x-1, currentOverlayTile.gridLocation.y);
-
-        if (map.ContainsKey(locationToCheck))
-        {
-            neighbours.Add(map[locationToCheck]);
-        }
-        
-        //right
-        locationToCheck =
-            new Vector2Int(currentOverlayTile.gridLocation.x+1, currentOverlayTile.gridLocation.y);
-
-        if (map.ContainsKey(locationToCheck))
-        {
-            neighbours.Add(map[locationToCheck]);
-        }
-
-        return neighbours;
     }
 }
